@@ -3,20 +3,20 @@ package next.controller;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebServlet("/users/logout")
-public class LogoutController extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+public class LogoutController extends HttpController {
+	public String doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		HttpSession session = req.getSession();
+		session.removeAttribute(UserSessionUtils.USER_SESSION_KEY);
+		return "redirect: /";
+	}
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        session.removeAttribute(UserSessionUtils.USER_SESSION_KEY);
-        resp.sendRedirect("/");
-    }
+	@Override
+	public String doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
