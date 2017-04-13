@@ -22,12 +22,13 @@ public class UserDao extends Dao implements Function<ResultSet, User> {
 	}
 
 	public void insert(User user) {
-		super.insert("INSERT INTO USERS VALUES (?, ?, ?, ?)", user.getUserId(),
-				user.getPassword(), user.getName(), user.getEmail());
+		super.executeSql("INSERT INTO USERS VALUES (?, ?, ?, ?)",
+				user.getUserId(), user.getPassword(), user.getName(),
+				user.getEmail());
 	}
 
 	public void update(User user) {
-		super.update(
+		super.executeSql(
 				"UPDATE USERS set password = ?, name = ?, email = ? WHERE userId = ?",
 				user.getPassword(), user.getName(), user.getEmail(),
 				user.getUserId());

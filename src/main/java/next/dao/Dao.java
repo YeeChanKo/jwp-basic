@@ -20,19 +20,10 @@ public class Dao {
 		}
 	}
 
-	protected void insert(String insertSql, String... pstmtParams) {
+	// insert or update
+	protected void executeSql(String sql, String... pstmtParams) {
 		try (Connection con = ConnectionManager.getConnection();
-				PreparedStatement pstmt = con.prepareStatement(insertSql);) {
-			setPreparedStatement(pstmt, pstmtParams);
-			pstmt.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	protected void update(String updateSql, String... pstmtParams) {
-		try (Connection con = ConnectionManager.getConnection();
-				PreparedStatement pstmt = con.prepareStatement(updateSql);) {
+				PreparedStatement pstmt = con.prepareStatement(sql);) {
 			setPreparedStatement(pstmt, pstmtParams);
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
