@@ -17,7 +17,7 @@ public class UserDaoTest {
     @Before
     public void setup() {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(new ClassPathResource("jwp.sql"));
+        populator.addScript(new ClassPathResource("jwp.sql")); // 여기서 처음에 테스트 데이터 하나 넣어준다
         DatabasePopulatorUtils.execute(populator, ConnectionManager.getDataSource());
     }
 
@@ -40,5 +40,6 @@ public class UserDaoTest {
         UserDao userDao = new UserDao();
         List<User> users = userDao.findAll();
         assertEquals(1, users.size());
+        assertEquals(users.get(0).getName(), "자바지기");
     }
 }
