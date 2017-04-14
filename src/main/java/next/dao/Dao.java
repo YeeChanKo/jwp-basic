@@ -14,14 +14,14 @@ import core.jdbc.ConnectionManager;
 public class Dao {
 
 	private void setPreparedStatement(PreparedStatement pstmt,
-			String... pstmtParams) throws SQLException {
+			Object... pstmtParams) throws SQLException {
 		for (int i = 1; i <= pstmtParams.length; i++) {
-			pstmt.setString(i, pstmtParams[i - 1]);
+			pstmt.setObject(i, pstmtParams[i - 1]);
 		}
 	}
 
 	// insert or update
-	protected void executeSql(String sql, String... pstmtParams) {
+	protected void executeSql(String sql, Object... pstmtParams) {
 		try (Connection con = ConnectionManager.getConnection();
 				PreparedStatement pstmt = con.prepareStatement(sql);) {
 			setPreparedStatement(pstmt, pstmtParams);
@@ -32,9 +32,10 @@ public class Dao {
 	}
 
 	protected <T> List<T> selectAll(String selectAllSql,
-			Function<ResultSet, T> constructor, String... resultSetParams) {
+			Function<ResultSet, T> constructor, Object... pstmtParams) {
 		try (Connection con = ConnectionManager.getConnection();
 				PreparedStatement pstmt = con.prepareStatement(selectAllSql);) {
+			setPreparedStatement(pstmt, pstmtParams);
 			ResultSet rs = pstmt.executeQuery();
 			List<T> objects = Lists.newArrayList();
 			while (rs.next()) {
@@ -48,22 +49,12 @@ public class Dao {
 		return null;
 	}
 
-	public <T> T selectByValue(String selectByValueSql,
-			Function<ResultSet, T> constructor, String value) {
-		try (Connection con = ConnectionManager.getConnection();
-				PreparedStatement pstmt = con
-						.prepareStatement(selectByValueSql);) {
-			setPreparedStatement(pstmt, value);
-			ResultSet rs = pstmt.executeQuery();
-			T object = null;
-			if (rs.next()) {
-				object = constructor.apply(rs);
-			}
-			rs.close();
-			return object;
-		} catch (SQLException e) {
-			e.printStackTrace();
+	protected <T> T selectByValue(String selectByValueSql,
+			Function<ResultSet, T> constructor, Object... value) {
+		List<T> values = selectAll(selectByValueSql, constructor, value);
+		if (values == null || values.isEmpty()) {
+			return null;
 		}
-		return null;
+		return values.get(0);
 	}
 }
