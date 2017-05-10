@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.reflections.ReflectionUtils;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import core.annotation.RequestMapping;
 import core.annotation.RequestMethod;
@@ -29,9 +30,9 @@ public class AnnotationHandlerMapping implements HandlerMapping {
 		Map<Class<?>, Object> co = new ControllerScanner(basePackage)
 				.getControllers();
 
-		Map<Method, Object> ms = getRequestMappingMethods(co);
-		for (Method m : ms.keySet()) {
-			Object i = ms.get(m);
+		Set<Method> ms = getRequestMappingMethods(co.keySet());
+		for (Method m : ms) {
+			Object i = co.get(ms.getClass());
 			RequestMapping rm = m.getAnnotation(RequestMapping.class);
 			HandlerKey hk = createHandlerKey(rm);
 			handlerExecutions.put(hk, new HandlerExecution(i, m));
@@ -39,18 +40,13 @@ public class AnnotationHandlerMapping implements HandlerMapping {
 	}
 
 	@SuppressWarnings("unchecked")
-	public Map<Method, Object> getRequestMappingMethods(
-			Map<Class<?>, Object> co) {
-		Map<Method, Object> mo = Maps.newHashMap();
-		for (Class<?> clazz : co.keySet()) {
-			Object i = co.get(clazz);
-			Set<Method> ms = ReflectionUtils.getAllMethods(clazz,
-					ReflectionUtils.withAnnotation(RequestMapping.class));
-			for (Method m : ms) {
-				mo.put(m, i);
-			}
+	public Set<Method> getRequestMappingMethods(Set<Class<?>> clazzs) {
+		Set<Method> ms = Sets.newHashSet();
+		for (Class<?> clazz : clazzs) {
+			ms.addAll(ReflectionUtils.getAllMethods(clazz,
+					ReflectionUtils.withAnnotation(RequestMapping.class)));
 		}
-		return mo;
+		return ms;
 	}
 
 	public HandlerKey createHandlerKey(RequestMapping rm) {

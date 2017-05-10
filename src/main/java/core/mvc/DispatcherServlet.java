@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 import core.nmvc.AnnotationHandlerMapping;
-import core.nmvc.HandlerExecution;
-import javassist.NotFoundException;
 
 @WebServlet(name = "dispatcher", urlPatterns = "/", loadOnStartup = 1)
 public class DispatcherServlet extends HttpServlet {
@@ -28,6 +26,7 @@ public class DispatcherServlet extends HttpServlet {
 	private AnnotationHandlerMapping ahm;
 
 	private List<HandlerMapping> hm = Lists.newArrayList();
+	private List<HandlerAdapter> ha = Lists.newArrayList();
 
 	@Override
 	public void init() throws ServletException {
@@ -40,6 +39,9 @@ public class DispatcherServlet extends HttpServlet {
 
 		hm.add(lhm);
 		hm.add(ahm);
+
+		ha.add(new LegacyHandlerAdapter());
+		ha.add(new AnnotationHandlerAdapter());
 	}
 
 	@Override
@@ -48,16 +50,9 @@ public class DispatcherServlet extends HttpServlet {
 		logger.debug("Method : {}, Request URI : {}", req.getMethod(),
 				req.getRequestURI());
 
-		Object handler = getHandler(req);
-		ModelAndView mav;
 		try {
-			if (handler instanceof Controller) {
-				mav = ((Controller) handler).execute(req, resp);
-			} else if (handler instanceof HandlerExecution) {
-				mav = ((HandlerExecution) handler).handle(req, resp);
-			} else {
-				throw new NotFoundException("request mapping not found");
-			}
+			Object handler = getHandler(req);
+			ModelAndView mav = execute(handler, req, resp);
 			View view = mav.getView();
 			view.render(mav.getModel(), req, resp);
 		} catch (Exception e) {
@@ -71,6 +66,16 @@ public class DispatcherServlet extends HttpServlet {
 			Object handler = handlerMapping.getHandler(req);
 			if (handler != null) {
 				return handler;
+			}
+		}
+		return null;
+	}
+
+	private ModelAndView execute(Object handler, HttpServletRequest req,
+			HttpServletResponse resp) throws Exception {
+		for (HandlerAdapter handlerAdapter : ha) {
+			if (handlerAdapter.doesSupport(handler)) {
+				return handlerAdapter.handle(req, resp, handler);
 			}
 		}
 		return null;
