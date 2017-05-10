@@ -25,8 +25,8 @@ public class DispatcherServlet extends HttpServlet {
 	private LegacyHandlerMapping lhm;
 	private AnnotationHandlerMapping ahm;
 
-	private List<HandlerMapping> hm = Lists.newArrayList();
-	private List<HandlerAdapter> ha = Lists.newArrayList();
+	private List<HandlerMapping<?>> hms = Lists.newArrayList();
+	private List<HandlerAdapter> has = Lists.newArrayList();
 
 	@Override
 	public void init() throws ServletException {
@@ -37,11 +37,11 @@ public class DispatcherServlet extends HttpServlet {
 				"next.controller.qna", "next.controller.user");
 		ahm.initialize();
 
-		hm.add(lhm);
-		hm.add(ahm);
+		hms.add(lhm);
+		hms.add(ahm);
 
-		ha.add(new LegacyHandlerAdapter());
-		ha.add(new AnnotationHandlerAdapter());
+		has.add(new LegacyHandlerAdapter());
+		has.add(new AnnotationHandlerAdapter());
 	}
 
 	@Override
@@ -62,22 +62,22 @@ public class DispatcherServlet extends HttpServlet {
 	}
 
 	public Object getHandler(HttpServletRequest req) {
-		for (HandlerMapping handlerMapping : hm) {
-			Object handler = handlerMapping.getHandler(req);
-			if (handler != null) {
-				return handler;
-			}
-		}
-		return null;
+		return hms.stream().map(hm -> hm.getHandler(req))
+				.filter(h -> h.isPresent()).findFirst()
+				.orElseThrow(
+						() -> new IllegalArgumentException("invalid request"))
+				.get();
 	}
 
 	private ModelAndView execute(Object handler, HttpServletRequest req,
 			HttpServletResponse resp) throws Exception {
-		for (HandlerAdapter handlerAdapter : ha) {
-			if (handlerAdapter.doesSupport(handler)) {
-				return handlerAdapter.handle(req, resp, handler);
-			}
-		}
-		return null;
+		return has.stream().filter(h -> h.doesSupport(handler)).findFirst()
+				.map(h -> {
+					try {
+						return h.handle(req, resp, handler);
+					} catch (Exception e) {
+						throw new RuntimeException();
+					}
+				}).orElseThrow(() -> new RuntimeException());
 	}
 }

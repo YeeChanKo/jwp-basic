@@ -2,6 +2,7 @@ package core.mvc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,7 +28,7 @@ import next.controller.user.ProfileController;
 import next.controller.user.UpdateFormUserController;
 import next.controller.user.UpdateUserController;
 
-public class LegacyHandlerMapping implements HandlerMapping {
+public class LegacyHandlerMapping implements HandlerMapping<Controller> {
 	private static final Logger logger = LoggerFactory
 			.getLogger(DispatcherServlet.class);
 	private Map<String, Controller> mappings = new HashMap<>();
@@ -68,7 +69,7 @@ public class LegacyHandlerMapping implements HandlerMapping {
 	}
 
 	@Override
-	public Controller getHandler(HttpServletRequest request) {
-		return findController(request.getRequestURI());
+	public Optional<Controller> getHandler(HttpServletRequest request) {
+		return Optional.ofNullable(findController(request.getRequestURI()));
 	}
 }

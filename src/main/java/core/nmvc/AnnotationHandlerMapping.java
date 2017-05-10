@@ -2,6 +2,7 @@ package core.nmvc;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,8 +16,9 @@ import core.annotation.RequestMapping;
 import core.annotation.RequestMethod;
 import core.mvc.HandlerMapping;
 
-public class AnnotationHandlerMapping implements HandlerMapping {
-
+public class AnnotationHandlerMapping
+		implements HandlerMapping<HandlerExecution> {
+	
 	private Object[] basePackage;
 
 	private Map<HandlerKey, HandlerExecution> handlerExecutions = Maps
@@ -29,10 +31,10 @@ public class AnnotationHandlerMapping implements HandlerMapping {
 	public void initialize() {
 		Map<Class<?>, Object> co = new ControllerScanner(basePackage)
 				.getControllers();
-
 		Set<Method> ms = getRequestMappingMethods(co.keySet());
+
 		for (Method m : ms) {
-			Object i = co.get(ms.getClass());
+			Object i = co.get(m.getDeclaringClass());
 			RequestMapping rm = m.getAnnotation(RequestMapping.class);
 			HandlerKey hk = createHandlerKey(rm);
 			handlerExecutions.put(hk, new HandlerExecution(i, m));
@@ -54,10 +56,11 @@ public class AnnotationHandlerMapping implements HandlerMapping {
 	}
 
 	@Override
-	public HandlerExecution getHandler(HttpServletRequest request) {
+	public Optional<HandlerExecution> getHandler(HttpServletRequest request) {
 		String requestUri = request.getRequestURI();
 		RequestMethod rm = RequestMethod
 				.valueOf(request.getMethod().toUpperCase());
-		return handlerExecutions.get(new HandlerKey(requestUri, rm));
+		return Optional.ofNullable(
+				handlerExecutions.get(new HandlerKey(requestUri, rm)));
 	}
 }
